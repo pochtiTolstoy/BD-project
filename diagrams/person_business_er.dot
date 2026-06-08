@@ -1,0 +1,178 @@
+digraph marketplace_customer_business_er {
+  graph [
+    rankdir=LR,
+    bgcolor="white",
+    pad=0.25,
+    nodesep=0.55,
+    ranksep=0.7,
+    splines=ortho,
+    fontname="Arial"
+  ];
+
+  node [
+    shape=record,
+    fontname="Arial",
+    fontsize=10,
+    style="rounded,filled",
+    fillcolor="#f8f9fb",
+    color="#495057"
+  ];
+
+  edge [
+    fontname="Arial",
+    fontsize=9,
+    color="#495057",
+    arrowsize=0.7
+  ];
+
+  subgraph cluster_core {
+    label="Core: tech marketplace customer";
+    color="#2f9e44";
+    penwidth=2;
+
+    person_profile [
+      fillcolor="#e6fcf5",
+      label="{person_profile|+ person_id uuid PK\l|last_name text\lfirst_name text\lmiddle_name text\lbirth_date date\lbirth_date_raw text\lgender_id uuid FK\lcreated_at timestamptz\l}"
+    ];
+
+    user_account [
+      fillcolor="#e6fcf5",
+      label="{user_account|+ account_id uuid PK\l|person_id uuid FK UNIQUE\llogin text UNIQUE\lpassword_hash text\laccount_status_id uuid FK\lregistered_at timestamptz\llast_login_at timestamptz\l}"
+    ];
+
+    dict_gender [
+      label="{dict_gender|+ gender_id uuid PK\l|code text UNIQUE\lname text\l}"
+    ];
+
+    dict_account_status [
+      label="{dict_account_status|+ account_status_id uuid PK\l|code text UNIQUE\lname text\l}"
+    ];
+  }
+
+  subgraph cluster_contacts {
+    label="Contacts and identifiers";
+    color="#1971c2";
+    penwidth=2;
+
+    dict_contact_type [
+      label="{dict_contact_type|+ contact_type_id uuid PK\l|code text UNIQUE\lname text\l}"
+    ];
+
+    user_contact [
+      label="{user_contact|+ contact_id uuid PK\l|person_id uuid FK\lcontact_type_id uuid FK\lcontact_value text\lraw_value text\lis_primary boolean\lis_verified boolean\lcreated_at timestamptz\l}"
+    ];
+
+    dict_identifier_type [
+      label="{dict_identifier_type|+ identifier_type_id uuid PK\l|code text UNIQUE\lname text\l}"
+    ];
+
+    person_identifier [
+      label="{person_identifier|+ identifier_id uuid PK\l|person_id uuid FK\lidentifier_type_id uuid FK\lidentifier_value text\lraw_value text\lis_verified boolean\l}"
+    ];
+  }
+
+  subgraph cluster_address {
+    label="Address snowflake";
+    color="#f08c00";
+    penwidth=2;
+
+    dict_address_type [
+      label="{dict_address_type|+ address_type_id uuid PK\l|code text UNIQUE\lname text\l}"
+    ];
+
+    dict_country [
+      label="{dict_country|+ country_id uuid PK\l|iso_code text UNIQUE\lname text\l}"
+    ];
+
+    dict_region [
+      label="{dict_region|+ region_id uuid PK\l|country_id uuid FK\lname text\l}"
+    ];
+
+    dict_city [
+      label="{dict_city|+ city_id uuid PK\l|region_id uuid FK\lname text\l}"
+    ];
+
+    dict_street [
+      label="{dict_street|+ street_id uuid PK\l|city_id uuid FK\lname text\l}"
+    ];
+
+    user_address [
+      label="{user_address|+ address_id uuid PK\l|person_id uuid FK\laddress_type_id uuid FK\lcountry_id uuid FK\lregion_id uuid FK\lcity_id uuid FK\lstreet_id uuid FK\lhouse text\lbuilding text\lflat text\lpostal_code text\lraw_address text\lis_default boolean\l}"
+    ];
+  }
+
+  subgraph cluster_documents {
+    label="Optional verification documents";
+    color="#7048e8";
+    penwidth=2;
+
+    dict_document_type [
+      label="{dict_document_type|+ document_type_id uuid PK\l|code text UNIQUE\lname text\l}"
+    ];
+
+    dict_verification_status [
+      label="{dict_verification_status|+ verification_status_id uuid PK\l|code text UNIQUE\lname text\l}"
+    ];
+
+    user_verification_document [
+      label="{user_verification_document|+ document_id uuid PK\l|person_id uuid FK\ldocument_type_id uuid FK\lseries text\lnumber text\lissue_date date\lissue_date_raw text\lissued_by text\lraw_document_text text\lverification_status_id uuid FK\l}"
+    ];
+  }
+
+  subgraph cluster_consents {
+    label="Consents";
+    color="#0ca678";
+    penwidth=2;
+
+    dict_consent_type [
+      label="{dict_consent_type|+ consent_type_id uuid PK\l|code text UNIQUE\lname text\ldescription text\l}"
+    ];
+
+    user_consent [
+      label="{user_consent|+ consent_id uuid PK\l|person_id uuid FK\lconsent_type_id uuid FK\lis_granted boolean\lgranted_at timestamptz\lrevoked_at timestamptz\lsource text\lraw_value text\l}"
+    ];
+  }
+
+  subgraph cluster_eav {
+    label="Business EAV: tech marketplace attributes";
+    color="#d6336c";
+    penwidth=2;
+
+    user_attribute_type [
+      label="{user_attribute_type|+ attribute_type_id uuid PK\l|code text UNIQUE\lname text\lvalue_type text\ldescription text\l}"
+    ];
+
+    user_attribute_value [
+      label="{user_attribute_value|+ attribute_value_id uuid PK\l|person_id uuid FK\lattribute_type_id uuid FK\lvalue_text text\lvalue_number numeric\lvalue_date date\lvalue_bool boolean\lvalue_json jsonb\lraw_value text\l}"
+    ];
+  }
+
+  person_profile -> dict_gender [xlabel="N:1"];
+  user_account -> person_profile [xlabel="1:1"];
+  user_account -> dict_account_status [xlabel="N:1"];
+
+  user_contact -> person_profile [xlabel="N:1"];
+  user_contact -> dict_contact_type [xlabel="N:1"];
+  person_identifier -> person_profile [xlabel="N:1"];
+  person_identifier -> dict_identifier_type [xlabel="N:1"];
+
+  dict_region -> dict_country [xlabel="N:1"];
+  dict_city -> dict_region [xlabel="N:1"];
+  dict_street -> dict_city [xlabel="N:1"];
+  user_address -> person_profile [xlabel="N:1"];
+  user_address -> dict_address_type [xlabel="N:1"];
+  user_address -> dict_country [xlabel="N:1"];
+  user_address -> dict_region [xlabel="N:1"];
+  user_address -> dict_city [xlabel="N:1"];
+  user_address -> dict_street [xlabel="N:1"];
+
+  user_verification_document -> person_profile [xlabel="N:1"];
+  user_verification_document -> dict_document_type [xlabel="N:1"];
+  user_verification_document -> dict_verification_status [xlabel="N:1"];
+
+  user_consent -> person_profile [xlabel="N:1"];
+  user_consent -> dict_consent_type [xlabel="N:1"];
+
+  user_attribute_value -> person_profile [xlabel="N:1"];
+  user_attribute_value -> user_attribute_type [xlabel="N:1"];
+}
